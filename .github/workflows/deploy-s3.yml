@@ -1,38 +1,39 @@
-name: Deploy Angular to S3 (Static Hosting)
+name: Deploy to S3
 
 on:
   push:
     branches:
-      - main  # o la rama que uses para desplegar
+      - main  # o la rama que uses para producción
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout repo
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '18'
 
-      - name: 📦 Install dependencies
+      - name: Install dependencies
         working-directory: ./angular-tour-of-heroes
         run: npm install
 
-      - name: 🏗️ Build Angular
+      - name: Build Angular app
         working-directory: ./angular-tour-of-heroes
-        run: npm run build -- --configuration production
+        run: npm run build --prod
 
-      - name: ☁️ Deploy to S3
-        uses: aws-actions/s3-sync@v2
+      - name: Deploy to S3
+        uses: aws-actions/s3-sync@v1
         with:
-          bucket: ${{ secrets.S3_BUCKET }}
-          region: ${{ secrets.AWS_REGION }}
-          source: ./angular-tour-of-heroes/dist/angular-tour-of-heroes
-          delete: true
+          args: --delete
+          source-dir: ./angular-tour-of-heroes/dist/angular-tour-of-heroes
+          destination: s3://$AWS_S3_BUCKET
         env:
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
